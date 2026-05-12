@@ -50,9 +50,8 @@ export default function ChatInput({
         type="text"
         placeholder="Envoyer un message..."
         value={content}
-        onChange={(e) =>
-          setContent(e.target.value)
-        }
+        maxLength={10}
+        onChange={(e) => setContent(e.target.value)}
         className="chat-input"
       />
 
