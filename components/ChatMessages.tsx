@@ -1,35 +1,122 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
 import CardMessage from "./CardMessage";
 import Message from "@/types/Message";
 
-export default function ChatMessages() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const { data: session } = authClient.useSession();
+const POLL_INTERVAL_MS = 4000;
 
-  useEffect(() => {
-    async function fetchMessages() {
-      const request = await fetch("/api/messages");
-      if (!request.ok) {
-        console.log(request.status);
-        return;
+export default function ChatMessages({
+  refreshKey,
+}: {
+  refreshKey: number;
+}) {
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  const { data: session } =
+    authClient.useSession();
+
+  function normalizeMessages(
+    data: Message[]
+  ) {
+    return data.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() -
+        new Date(b.createdAt).getTime()
+    );
+  }
+
+  const fetchMessages = useCallback(
+    async () => {
+      try {
+        const request = await fetch(
+          "/api/messages"
+        );
+
+        if (!request.ok) return;
+
+        const data = await request.json();
+
+        setMessages(
+          normalizeMessages(data)
+        );
+      } catch (error) {
+        console.log(error);
       }
-      const data = await request.json();
-      setMessages(data);
-    }
+    },
+    []
+  );
+
+  /*
+    Chargement initial
+  */
+  useEffect(() => {
     fetchMessages();
-  }, []);
+  }, [fetchMessages]);
+
+  /*
+    Refresh après envoi
+  */
+  useEffect(() => {
+    fetchMessages();
+  }, [refreshKey, fetchMessages]);
+
+  /*
+    Polling automatique
+  */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchMessages();
+    }, POLL_INTERVAL_MS);
+
+    return () =>
+      clearInterval(interval);
+  }, [fetchMessages]);
+
+  /*
+    Refetch quand retour onglet
+  */
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+        fetchMessages();
+      }
+    }
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    return () => {
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+    };
+  }, [fetchMessages]);
 
   if (messages.length === 0) {
-    return <div>Aucun Message.</div>;
+    return (
+      <div className="empty-state">
+        Aucun message.
+      </div>
+    );
   }
 
   return (
-    <div className="p-4 flex gap-4 flex-col">
+    <div className="messages-list">
       {messages.map((m) => (
-        <CardMessage m={m} userId={session?.user.id} key={m._id} />
+        <CardMessage
+          key={m._id}
+          m={m}
+          userId={session?.user.id}
+        />
       ))}
     </div>
   );

@@ -2,32 +2,66 @@
 
 import { useState } from "react";
 
-export default function ChatInput() {
-  const [content, setContent] = useState("");
+export default function ChatInput({
+  onMessageSent,
+}: {
+  onMessageSent: () => void;
+}) {
+  const [content, setContent] =
+    useState("");
 
-  async function handleSubmit(e: React.SubmitEvent) {
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
     e.preventDefault();
+
     if (!content.trim()) return;
 
-    const request = await fetch("/api/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
-    });
+    const request = await fetch(
+      "/api/messages",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          content,
+        }),
+      }
+    );
 
     if (request.ok) {
-      e.target.reset();
+      setContent("");
+
+      /*
+        Refresh immédiat
+      */
+      onMessageSent();
     }
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form
+      onSubmit={handleSubmit}
+      className="chat-form"
+    >
       <input
         type="text"
-        placeholder="Votre Message..."
-        onChange={(e) => setContent(e.target.value)}
+        placeholder="Envoyer un message..."
+        value={content}
+        onChange={(e) =>
+          setContent(e.target.value)
+        }
+        className="chat-input"
       />
-      <button type="submit">Envoyer</button>
+
+      <button
+        type="submit"
+        className="send-button"
+      >
+        Envoyer
+      </button>
     </form>
   );
 }

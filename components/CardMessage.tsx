@@ -18,6 +18,7 @@ export default function CardMessage({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ _id, userId }),
     });
+
     if (!request.ok) {
       const data = await request.json();
       console.log(data);
@@ -30,17 +31,43 @@ export default function CardMessage({
 
   return (
     <div
-      key={m._id}
-      className={`flex flex-col rounded ${isOwn ? "items-end" : "items-start"}`}
+      className={`flex w-full ${
+        isOwn ? "justify-end" : "justify-start"
+      }`}
     >
-      {!isOwn && <p>{m.userName}</p>}
-      <p>{m.content}</p>
-      <p>{new Date(m.createdAt).toLocaleTimeString("fr-FR")}</p>
-      {isOwn && (
-        <button onClick={handleClick}>
-          <FaTrash />
-        </button>
-      )}
+      <div
+        className={`message-bubble ${
+          isOwn ? "own-message" : "other-message"
+        }`}
+      >
+        {!isOwn && (
+          <p className="message-user">
+            {m.userName}
+          </p>
+        )}
+
+        <p className="message-content">
+          {m.content}
+        </p>
+
+        <div className="message-footer">
+          <span className="message-time">
+            {new Date(m.createdAt).toLocaleTimeString("fr-FR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+
+          {isOwn && (
+            <button
+              onClick={handleClick}
+              className="delete-button"
+            >
+              <FaTrash />
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
