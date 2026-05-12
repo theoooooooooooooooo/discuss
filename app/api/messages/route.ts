@@ -52,12 +52,6 @@ export async function POST(request: NextRequest) {
     userId: session.user.id,
     userName: session.user.name,
   };
-  if (!content || content.length > 10) {
-  return Response.json(
-    { error: "Max 10 caractères" },
-    { status: 400 }
-  );
-}
   await db.collection("messages").insertOne(message);
   return NextResponse.json(message, { status: 201 });
 }
