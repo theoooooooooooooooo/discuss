@@ -38,20 +38,41 @@ export async function POST(request: NextRequest) {
   });
 
   if (!session)
-    return NextResponse.json({ error: "Non autorise" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Non autorise" },
+      { status: 401 }
+    );
 
   const { content } = await request.json();
 
-  if (!content)
-    return NextResponse.json({ error: "Message vide" }, { status: 400 });
+  if (!content || typeof content !== "string")
+    return NextResponse.json(
+      { error: "Message vide" },
+      { status: 400 }
+    );
+
+  // ✅ LIMIT 10 CARACTÈRES
+  if (content.length > 10) {
+    return NextResponse.json(
+      { error: "Max 10 caractères" },
+      { status: 400 }
+    );
+  }
 
   const db = await getDb();
+
   const message = {
-    content: content,
+    content,
     createdAt: new Date(),
     userId: session.user.id,
     userName: session.user.name,
   };
-  await db.collection("messages").insertOne(message);
-  return NextResponse.json(message, { status: 201 });
+
+  await db
+    .collection("messages")
+    .insertOne(message);
+
+  return NextResponse.json(message, {
+    status: 201,
+  });
 }

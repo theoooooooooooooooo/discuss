@@ -15,7 +15,7 @@ export default function ChatInput({
   ) {
     e.preventDefault();
 
-    if (!content.trim()) return;
+    if (!content.trim() || content.length > 10) return;
 
     const request = await fetch(
       "/api/messages",
